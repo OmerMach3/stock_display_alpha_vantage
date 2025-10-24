@@ -37,7 +37,7 @@ How to run (dev)
 Backend (spring boot):
 
 ```powershell
-cd C:\..\..\..\finansal_deneme
+cd C:\..\..\..\stock_display_alpha_vantage
 .\mvnw.cmd spring-boot:run
 ```
 
