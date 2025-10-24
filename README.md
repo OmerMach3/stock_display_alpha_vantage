@@ -55,4 +55,4 @@ Notes / troubleshooting
 - If you hit a Lombok/JDK compile problem, update `lombok.version` in `pom.xml` or wipe the local maven cache for Lombok and try again.
 - In production prefer a real secrets manager (Azure Key Vault, GitHub/GitLab actions secrets, etc.).
 
-Want me to add CI snippets or example GitHub Actions usage for secrets? I can add that too.
+
