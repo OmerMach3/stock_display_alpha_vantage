@@ -1,0 +1,261 @@
+/* Animated Header Styles */
+.animated-header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.title-gradient {
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(
+    45deg,
+    #ff6b6b,
+    #4ecdc4,
+    #45b7d1,
+    #f9ca24,
+    #f0932b,
+    #eb4d4b,
+    #6c5ce7,
+    #a29bfe
+  );
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease-in-out infinite;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+  margin: 20px 0;
+  letter-spacing: 2px;
+  position: relative;
+}
+
+.header-decoration {
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    #ff6b6b,
+    #4ecdc4,
+    #45b7d1,
+    #f9ca24,
+    #f0932b,
+    #eb4d4b,
+    #6c5ce7,
+    #a29bfe
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 4s ease-in-out infinite;
+  border-radius: 2px;
+  margin: 0 auto;
+  width: 60%;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Glowing effect animation */
+.title-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shine 3s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Hover effect for the entire header */
+.animated-header:hover .title-gradient {
+  animation-duration: 2s;
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+.animated-header:hover .header-decoration {
+  animation-duration: 2s;
+  width: 80%;
+  transition: width 0.3s ease;
+}
+
+.container {
+  padding: 20px;
+  font-family: sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.filters {
+  margin-bottom: 30px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-inputs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-inputs input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.filter-inputs button {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.filter-inputs button:first-of-type {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.filter-inputs button:first-of-type:hover {
+  background-color: #4338ca;
+}
+
+.filter-inputs button:nth-of-type(2) {
+  background-color: #10b981;
+  color: white;
+}
+
+.filter-inputs button:nth-of-type(2):hover {
+  background-color: #059669;
+}
+
+.filter-inputs button:last-child {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.filter-inputs button:last-child:hover {
+  background-color: #d97706;
+}
+
+.filter-inputs button:disabled {
+  background-color: #6b7280;
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 12px;
+  color: #333;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 12px 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #4f46e5;
+  color: white;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+tr:hover {
+  background-color: #e5e7eb;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .title-gradient {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+  }
+
+  .header-decoration {
+    width: 80%;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .slider-container {
+    justify-content: space-between;
+  }
+
+  .filter-inputs {
+    justify-content: center;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 6px 4px;
+  }
+}
