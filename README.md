@@ -1,4 +1,4 @@
-# finansal_deneme — quickstart (informal)
+# stock_display_alpha_vantage — quickstart (informal)
 
 This repo has a small Spring Boot backend that pulls stock data (AlphaVantage) and an Angular frontend.
 
