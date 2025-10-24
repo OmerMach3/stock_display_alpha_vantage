@@ -11,7 +11,7 @@ Temporary (just for current terminal session):
 ```powershell
 $env:FINANCIAL_API_KEY = 'your_api_key_here'
 # then run the backend from repo root
-cd C:\Users\nurha\Desktop\finansal_deneme
+cd C:\Users\..\..\stock_display_alpha_vantage
 .\mvnw.cmd spring-boot:run
 ```
 
