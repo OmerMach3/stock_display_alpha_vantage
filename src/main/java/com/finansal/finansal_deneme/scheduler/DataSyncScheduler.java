@@ -2,6 +2,7 @@ package com.finansal.finansal_deneme.scheduler;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import com.finansal.finansal_deneme.service.StockService;
@@ -20,36 +21,77 @@ public class DataSyncScheduler {
         "DIS","NFLX","ADBE","PYPL","INTC","CSCO","ORCL","CRM","UBER","LYFT","CEG"
     );
     
-    // Sıradaki hissenin indeksini tutan, thread-safe bir sayaç.
-    private final AtomicInteger stockIndex = new AtomicInteger(0);
+    // Günlük veri çekimi için indeks sayacı
+    private final AtomicInteger dailyStockIndex = new AtomicInteger(0);
+    // Aylık veri çekimi için indeks sayacı
+    private final AtomicInteger monthlyStockIndex = new AtomicInteger(0);
+    // Günlük veri çekimi tamamlandı mı kontrolü
+    private final AtomicBoolean dailyDataCompleted = new AtomicBoolean(false);
 
     public DataSyncScheduler(StockService stockService) {
         this.stockService = stockService;
     }
 
-    // AYLIK VERİ ÇEKME: Her 20 saniyede bir çalışır.
+    // GÜNLÜK VERİ ÇEKME: Her 20 saniyede bir çalışır.
     // initialDelay = 5000: Uygulama başladıktan 5 saniye sonra ilk isteği atar.
+    // Önce tüm hisselerin günlük verilerini çeker
     @Scheduled(fixedRate = 20000, initialDelay = 5000)
+    public void syncNextStockDaily() {
+
+        if (stock_list.isEmpty()) {
+            return; // Hisse listesi boşsa bir şey yapma.
+        }
+
+        // Eğer günlük veri çekimi tamamlandıysa, bu metodu çalıştırma
+        if (dailyDataCompleted.get()) {
+            return;
+        }
+
+        // Atomik olarak mevcut indeksi alıp bir sonrakine güncelle.
+        int currentIndex = dailyStockIndex.getAndUpdate(i -> (i + 1) % stock_list.size());
+        String symbol = stock_list.get(currentIndex);
+
+        log.info("Günlük veri çekiliyor: {} ({}/{})", symbol, currentIndex + 1, stock_list.size());
+
+        try {
+            // Günlük veri senkronizasyonu
+            stockService.syncDailyStockData(symbol);
+            
+            // Eğer tüm hisseler için günlük veri çekimi tamamlandıysa işaretleme yap
+            if (currentIndex == stock_list.size() - 1) {
+                dailyDataCompleted.set(true);
+                log.info("Tüm hisselerin günlük veri çekimi tamamlandı. Aylık veri çekimine geçiliyor...");
+            }
+        } catch (Exception e) {
+            log.error("Günlük veri çekiminde {} için hata oluştu: {}", symbol, e.getMessage(), e);
+        }
+    }
+
+    // AYLIK VERİ ÇEKME: Her 25 saniyede bir çalışır.
+    // Günlük veri çekimi tamamlandıktan sonra başlar
+    @Scheduled(fixedRate = 25000, initialDelay = 10000)
     public void syncNextStockMonthly() {
 
         if (stock_list.isEmpty()) {
             return; // Hisse listesi boşsa bir şey yapma.
         }
 
+        // Günlük veri çekimi tamamlanmadıysa aylık veri çekimini başlatma
+        if (!dailyDataCompleted.get()) {
+            return;
+        }
+
         // Atomik olarak mevcut indeksi alıp bir sonrakine güncelle.
-        // Böylece aynı anda birden fazla scheduler çalıştırılsa bile
-        // her çağrı farklı bir hisseyi işleyip, atlama/tekrar sorunlarını önleriz.
-        int currentIndex = stockIndex.getAndUpdate(i -> (i + 1) % stock_list.size());
+        int currentIndex = monthlyStockIndex.getAndUpdate(i -> (i + 1) % stock_list.size());
         String symbol = stock_list.get(currentIndex);
 
         log.info("Aylık veri çekiliyor: {} ({}/{})", symbol, currentIndex + 1, stock_list.size());
 
         try {
-            // Servisi asenkron ya da senkron çağır; hata olursa yakalayıp logla.
+            // Aylık veri senkronizasyonu
             stockService.syncMonthlyStockData(symbol);
         } catch (Exception e) {
-            log.error("Zamanlayıcıda {} için hata oluştu: {}", symbol, e.getMessage(), e);
-            // İndeksi önceden atomik olarak artırdığımız için burada ekstra işlem yapmaya gerek yok.
+            log.error("Aylık veri çekiminde {} için hata oluştu: {}", symbol, e.getMessage(), e);
         }
     }
 }

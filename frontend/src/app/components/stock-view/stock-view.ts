@@ -16,6 +16,7 @@ export class StockView implements OnInit {
   selectedStockIndex: number = 0;
   stockData: StockData[] = [];
   filteredStockData: StockData[] = [];
+  viewMode: 'monthly' | 'daily' = 'monthly';
 
   // Arayüz durumu için değişkenler
   loading: boolean = false;
@@ -47,7 +48,12 @@ export class StockView implements OnInit {
     if (this.stocks.length === 0) return;
     const selectedStock = this.stocks[this.selectedStockIndex];
     this.loading = true;
-    this.stockService.getStocks(selectedStock).subscribe({
+    const loader$ =
+      this.viewMode === 'monthly'
+        ? this.stockService.getStocks(selectedStock)
+        : this.stockService.getStocksDaily(selectedStock);
+
+    loader$.subscribe({
       next: (data) => {
         this.stockData = data;
         this.applyFilters();
@@ -64,6 +70,10 @@ export class StockView implements OnInit {
     this.loadStockData();
   }
 
+  onViewModeChange(): void {
+    this.loadStockData();
+  }
+
   // Veriyi arka uçtan yeniden yükleyerek tazele
   refreshData(): void {
     this.loadStockData();
@@ -73,7 +83,11 @@ export class StockView implements OnInit {
   syncNow(): void {
     const selectedStock = this.stocks[this.selectedStockIndex];
     this.syncing = true;
-    this.stockService.syncStock(selectedStock).subscribe({
+    const sync$ =
+      this.viewMode === 'monthly'
+        ? this.stockService.syncStockMonthly(selectedStock)
+        : this.stockService.syncStockDaily(selectedStock);
+    sync$.subscribe({
       next: (msg) => {
         console.log('Senkronizasyon yanıtı:', msg);
       },
@@ -99,6 +113,6 @@ export class StockView implements OnInit {
 
   // ngFor için trackBy fonksiyonu
   trackById(index: number, item: StockData): number {
-    return item.id;
+    return item?.id ?? index;
   }
 }

@@ -19,6 +19,28 @@
     </div>
 
     <div class="filter-inputs">
+      <div class="view-toggle">
+        <label>
+          <input
+            type="radio"
+            name="viewMode"
+            [(ngModel)]="viewMode"
+            value="monthly"
+            (change)="onViewModeChange()"
+          />
+          Monthly
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="viewMode"
+            [(ngModel)]="viewMode"
+            value="daily"
+            (change)="onViewModeChange()"
+          />
+          Daily (1000 days)
+        </label>
+      </div>
       <input type="date" [(ngModel)]="startDate" placeholder="Start Date" />
       <input type="date" [(ngModel)]="endDate" placeholder="End Date" />
       <input type="number" [(ngModel)]="minPrice" placeholder="Min Price" />
@@ -32,7 +54,11 @@
   </div>
 
   <!-- Stock Chart Component -->
-  <app-stock-chart [stockData]="filteredStockData" [selectedStock]="stocks[selectedStockIndex]">
+  <app-stock-chart
+    [stockData]="filteredStockData"
+    [selectedStock]="stocks[selectedStockIndex]"
+    [viewMode]="viewMode"
+  >
   </app-stock-chart>
 
   <table>

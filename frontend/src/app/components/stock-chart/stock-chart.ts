@@ -27,6 +27,7 @@ let registerables: any;
 export class StockChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() stockData: StockData[] = [];
   @Input() selectedStock: string = '';
+  @Input() viewMode: 'monthly' | 'daily' = 'monthly';
   @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   private chart: any = null;
@@ -82,7 +83,7 @@ export class StockChartComponent implements OnChanges, AfterViewInit, OnDestroy 
         plugins: {
           title: {
             display: true,
-            text: `${this.selectedStock} Stock Price Over Time`,
+            text: `${this.selectedStock} ${this.viewMode === 'daily' ? 'Daily' : 'Monthly'} Price`,
             font: {
               size: 16,
             },
@@ -97,7 +98,7 @@ export class StockChartComponent implements OnChanges, AfterViewInit, OnDestroy 
             type: 'category',
             title: {
               display: true,
-              text: 'Month',
+              text: 'Date',
             },
             ticks: {
               maxRotation: 45,
@@ -135,32 +136,31 @@ export class StockChartComponent implements OnChanges, AfterViewInit, OnDestroy 
 
     // Update chart title with current stock
     if (this.chart.options.plugins?.title) {
-      this.chart.options.plugins.title.text = `${this.selectedStock} Stock Price Over Time`;
+      this.chart.options.plugins.title.text = `${this.selectedStock} ${
+        this.viewMode === 'daily' ? 'Daily' : 'Monthly'
+      } Price`;
     }
 
     this.chart.update();
   }
 
   private prepareChartData(): any {
-    // Sort data by date
+    // Sort data by date ascending
     const sortedData = [...this.stockData].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // Group data by month and calculate monthly averages
-    const monthlyData = this.groupByMonth(sortedData);
-
-    const labels = Object.keys(monthlyData);
-    const closePrices = Object.values(monthlyData).map((data) => data.avgClose);
-    const openPrices = Object.values(monthlyData).map((data) => data.avgOpen);
-    const highPrices = Object.values(monthlyData).map((data) => data.maxHigh);
-    const lowPrices = Object.values(monthlyData).map((data) => data.minLow);
+    const labels = sortedData.map((d) => d.date);
+    const closePrices = sortedData.map((d) => d.close);
+    const openPrices = sortedData.map((d) => d.open);
+    const highPrices = sortedData.map((d) => d.high);
+    const lowPrices = sortedData.map((d) => d.low);
 
     return {
-      labels: labels,
+      labels,
       datasets: [
         {
-          label: 'Close Price',
+          label: 'Close',
           data: closePrices,
           borderColor: '#3b82f6',
           backgroundColor: '#3b82f6',
@@ -168,7 +168,7 @@ export class StockChartComponent implements OnChanges, AfterViewInit, OnDestroy 
           tension: 0.1,
         },
         {
-          label: 'Open Price',
+          label: 'Open',
           data: openPrices,
           borderColor: '#10b981',
           backgroundColor: '#10b981',
