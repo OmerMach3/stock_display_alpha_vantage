@@ -3,6 +3,7 @@ package com.finansal.finansal_deneme.integration;
 import java.util.Optional;
 
 import com.finansal.finansal_deneme.dto.external.AlphaVantageIntradayResponseDto;
+import com.finansal.finansal_deneme.dto.external.AlphaVantageDailyResponseDto;
 import com.finansal.finansal_deneme.dto.external.AlphaVantageMonthlyResponseDto;
 
 public interface FinancialDataProvider {
@@ -12,4 +13,7 @@ public interface FinancialDataProvider {
     
     // Monthly data için yeni method
     Optional<AlphaVantageMonthlyResponseDto> fetchMonthlyStockData(String symbol);
+
+    // Günlük data için method
+    Optional<AlphaVantageDailyResponseDto> fetchDailyStockData(String symbol);
 }

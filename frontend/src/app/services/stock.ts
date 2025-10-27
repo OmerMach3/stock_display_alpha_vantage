@@ -1,12 +1,13 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 
 export interface StockData {
   id: number;
   symbol: string;
-  date: string;
+  date: string; // ISO date or datetime string
   open: number;
   high: number;
   low: number;
@@ -39,13 +40,51 @@ export class StockService {
     return this.http.get<StockData[]>(`${this.apiUrl}/${symbol}`);
   }
 
-  // Backendde bir sembol için veri senkronizasyonu başlatır (POST /api/stocks/sync/{symbol} çağrısı yapar).
-  syncStock(symbol: string): Observable<string> {
+  // Günlük (son 1000 gün) veri
+  getStocksDaily(symbol: string): Observable<StockData[]> {
     if (!this.isBrowser) {
-      return of('SSR - No sync available'); // Return default message for SSR
+      return of([]);
     }
-    // responseType: 'text' kullanarak ve Observable<string> olarak cast ederek metin cevabı alıyoruz.
-    return this.http.post(`${this.apiUrl}/sync/${encodeURIComponent(symbol)}`, null, {
+    return this.http.get<StockData[]>(`${this.apiUrl}/${encodeURIComponent(symbol)}/daily`);
+  }
+
+  // Intraday 5min veri - backend DTO'yu StockData formatına dönüştürür
+  getStocksIntraday(symbol: string): Observable<StockData[]> {
+    if (!this.isBrowser) {
+      return of([]);
+    }
+    return this.http.get<any[]>(`${this.apiUrl}/${encodeURIComponent(symbol)}/intraday`).pipe(
+      map((arr: any[]) =>
+        arr.map((p, idx) => ({
+          id: idx + 1,
+          symbol: p.symbol ?? symbol,
+          date: p.timestamp,
+          open: Number(p.open),
+          high: Number(p.high),
+          low: Number(p.low),
+          close: Number(p.close),
+          volume: Number(p.volume),
+        }))
+      )
+    );
+  }
+
+  // Günlük veri senkronizasyonu
+  syncStockDaily(symbol: string): Observable<string> {
+    if (!this.isBrowser) {
+      return of('SSR - No sync available');
+    }
+    return this.http.post(`${this.apiUrl}/syncDaily/${encodeURIComponent(symbol)}`, null, {
+      responseType: 'text',
+    }) as Observable<string>;
+  }
+
+  // Aylık veri senkronizasyonu
+  syncStockMonthly(symbol: string): Observable<string> {
+    if (!this.isBrowser) {
+      return of('SSR - No sync available');
+    }
+    return this.http.post(`${this.apiUrl}/syncMonthly/${encodeURIComponent(symbol)}`, null, {
       responseType: 'text',
     }) as Observable<string>;
   }
