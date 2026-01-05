@@ -1,5 +1,6 @@
 package com.finansal.finansal_deneme.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -17,7 +18,9 @@ import lombok.Data;
 @Table(name = "stock_daily_data", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"symbol", "date"})
 })
-public class StockDailyData {
+public class StockDailyData implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

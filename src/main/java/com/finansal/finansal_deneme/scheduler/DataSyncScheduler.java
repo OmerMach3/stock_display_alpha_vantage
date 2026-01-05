@@ -8,90 +8,72 @@ import org.springframework.stereotype.Component;
 import com.finansal.finansal_deneme.service.StockService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 @Component
 public class DataSyncScheduler {
     private final StockService stockService;
     private static final Logger log = LoggerFactory.getLogger(DataSyncScheduler.class);
-    
-    // Periyodik olarak veri çekilecek hisselerin listesi.
-    // Alpha Vantage API limiti (5 istek/dakika) nedeniyle liste kısa tutulmuştur.
+    //Add any ticker you want to sync here
     private final List<String> stock_list = List.of(
         "AAPL","IBM","MSFT","GOOGL","AMZN","TSLA","META","NVDA","JPM","V",
         "DIS","NFLX","ADBE","PYPL","INTC","CSCO","ORCL","CRM","UBER","LYFT","CEG"
     );
     
-    // Günlük veri çekimi için indeks sayacı
-    private final AtomicInteger dailyStockIndex = new AtomicInteger(0);
-    // Aylık veri çekimi için indeks sayacı
-    private final AtomicInteger monthlyStockIndex = new AtomicInteger(0);
-    // Günlük veri çekimi tamamlandı mı kontrolü
-    private final AtomicBoolean dailyDataCompleted = new AtomicBoolean(false);
+    private int dailyStockIndex = 0;
+    private int monthlyStockIndex = 0;
+    private boolean isDailyCycleActive = true; // Start with daily data first
 
     public DataSyncScheduler(StockService stockService) {
         this.stockService = stockService;
     }
 
-    // GÜNLÜK VERİ ÇEKME: Her 20 saniyede bir çalışır.
-    // initialDelay = 5000: Uygulama başladıktan 5 saniye sonra ilk isteği atar.
-    // Önce tüm hisselerin günlük verilerini çeker
     @Scheduled(fixedRate = 20000, initialDelay = 5000)
-    public void syncNextStockDaily() {
+    public void syncNextStock() {
+        if (stock_list.isEmpty()) return;
 
-        if (stock_list.isEmpty()) {
-            return; // Hisse listesi boşsa bir şey yapma.
-        }
-
-        // Eğer günlük veri çekimi tamamlandıysa, bu metodu çalıştırma
-        if (dailyDataCompleted.get()) {
-            return;
-        }
-
-        // Atomik olarak mevcut indeksi alıp bir sonrakine güncelle.
-        int currentIndex = dailyStockIndex.getAndUpdate(i -> (i + 1) % stock_list.size());
-        String symbol = stock_list.get(currentIndex);
-
-        log.info("Günlük veri çekiliyor: {} ({}/{})", symbol, currentIndex + 1, stock_list.size());
-
-        try {
-            // Günlük veri senkronizasyonu
-            stockService.syncDailyStockData(symbol);
-            
-            // Eğer tüm hisseler için günlük veri çekimi tamamlandıysa işaretleme yap
-            if (currentIndex == stock_list.size() - 1) {
-                dailyDataCompleted.set(true);
-                log.info("Tüm hisselerin günlük veri çekimi tamamlandı. Aylık veri çekimine geçiliyor...");
-            }
-        } catch (Exception e) {
-            log.error("Günlük veri çekiminde {} için hata oluştu: {}", symbol, e.getMessage(), e);
+        if (isDailyCycleActive) {
+            runDailySync();
+        } else {
+            runMonthlySync();
         }
     }
 
-    // AYLIK VERİ ÇEKME: Her 25 saniyede bir çalışır.
-    // Günlük veri çekimi tamamlandıktan sonra başlar
-    @Scheduled(fixedRate = 25000, initialDelay = 10000)
-    public void syncNextStockMonthly() {
-
-        if (stock_list.isEmpty()) {
-            return; // Hisse listesi boşsa bir şey yapma.
-        }
-
-        // Günlük veri çekimi tamamlanmadıysa aylık veri çekimini başlatma
-        if (!dailyDataCompleted.get()) {
-            return;
-        }
-
-        // Atomik olarak mevcut indeksi alıp bir sonrakine güncelle.
-        int currentIndex = monthlyStockIndex.getAndUpdate(i -> (i + 1) % stock_list.size());
-        String symbol = stock_list.get(currentIndex);
-
-        log.info("Aylık veri çekiliyor: {} ({}/{})", symbol, currentIndex + 1, stock_list.size());
+    private void runDailySync() {
+        String symbol = stock_list.get(dailyStockIndex);
+        log.info("[GÜNLÜK DÖNGÜ] İşleniyor: {} ({}/{})", symbol, dailyStockIndex + 1, stock_list.size());
 
         try {
-            // Aylık veri senkronizasyonu
-            stockService.syncMonthlyStockData(symbol);
+            stockService.syncDailyStockData(symbol);
+            dailyStockIndex++;
+
+            // End of the list?
+            if (dailyStockIndex >= stock_list.size()) {
+                dailyStockIndex = 0; // Reset to the start
+                isDailyCycleActive = false; // Daily run finished, switch to monthly cycle
+                log.info(">>> Tüm hisselerin günlük verileri güncellendi. Aylık döngü başlıyor...");
+            }
         } catch (Exception e) {
-            log.error("Aylık veri çekiminde {} için hata oluştu: {}", symbol, e.getMessage(), e);
+            log.error("Günlük veri hatası ({}): {}", symbol, e.getMessage());
+            dailyStockIndex++; // Even on error, move to the next so the loop does not stall
+        }
+    }
+
+    private void runMonthlySync() {
+        String symbol = stock_list.get(monthlyStockIndex);
+        log.info("[AYLIK DÖNGÜ] İşleniyor: {} ({}/{})", symbol, monthlyStockIndex + 1, stock_list.size());
+
+        try {
+            stockService.syncMonthlyStockData(symbol);
+            monthlyStockIndex++;
+
+            // End of the list?
+            if (monthlyStockIndex >= stock_list.size()) {
+                monthlyStockIndex = 0; // Reset to the start
+                isDailyCycleActive = true; // Monthly run finished, back to daily cycle
+                log.info(">>> Tüm hisselerin aylık verileri güncellendi. Günlük döngüye geri dönülüyor...");
+            }
+        } catch (Exception e) {
+            log.error("Aylık veri hatası ({}): {}", symbol, e.getMessage());
+            monthlyStockIndex++;
         }
     }
 }

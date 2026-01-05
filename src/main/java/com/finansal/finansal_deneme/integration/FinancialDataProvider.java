@@ -7,13 +7,12 @@ import com.finansal.finansal_deneme.dto.external.AlphaVantageDailyResponseDto;
 import com.finansal.finansal_deneme.dto.external.AlphaVantageMonthlyResponseDto;
 
 public interface FinancialDataProvider {
-    // Optional<T> kullanımı, veri bulunamadığında NullPointerException yerine
-    // güvenli bir yapı sunar.
+    // Using Optional<T> avoids NullPointerExceptions when data is missing.
     Optional<AlphaVantageIntradayResponseDto> fetchIntradayStockData(String symbol);
     
-    // Monthly data için yeni method
+    // Method for monthly data
     Optional<AlphaVantageMonthlyResponseDto> fetchMonthlyStockData(String symbol);
 
-    // Günlük data için method
+    // Method for daily data
     Optional<AlphaVantageDailyResponseDto> fetchDailyStockData(String symbol);
 }
