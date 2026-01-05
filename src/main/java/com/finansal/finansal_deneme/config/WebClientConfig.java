@@ -6,13 +6,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.core.task.TaskExecutor;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 import io.netty.channel.ChannelOption;
 
 import java.time.Duration;
-import java.util.concurrent.Executor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -22,7 +20,7 @@ public class WebClientConfig {
 
     @Bean
     public WebClient.Builder webClientBuilder() {
-        // IPv4 öncelikli connection provider
+        // Connection provider that prefers IPv4
         ConnectionProvider connectionProvider = ConnectionProvider.builder("custom")
                 .maxConnections(100)
                 .maxIdleTime(Duration.ofSeconds(20))
@@ -31,7 +29,7 @@ public class WebClientConfig {
                 .evictInBackground(Duration.ofSeconds(120))
                 .build();
 
-        // HttpClient'ı IPv4 için optimize et
+        // Tune HttpClient to prefer IPv4
         HttpClient httpClient = HttpClient.create(connectionProvider)
                 .responseTimeout(Duration.ofSeconds(30))
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
@@ -42,18 +40,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024)); // 16MB için Alpha Vantage günlük verisi
-    }
-
-    @Bean(name = "taskExecutor")
-    public Executor taskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("FinancialData-");
-        executor.initialize();
-        return executor;
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024)); // 16MB cap suits Alpha Vantage daily payloads
     }
 
     @Bean

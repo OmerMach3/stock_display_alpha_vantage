@@ -9,12 +9,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Angular uygulamasının (localhost:4200) backend API'sine (localhost:8080)
-        // erişebilmesi için CORS (Cross-Origin Resource Sharing) ayarları.
-        registry.addMapping("/api/**") // Sadece /api/ ile başlayan yollara izin ver.
-                .allowedOrigins("http://localhost:4200") // Sadece bu adresten gelen isteklere izin ver.
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // İzin verilen HTTP metodları.
-                .allowedHeaders("*") // Tüm header'lara izin ver.
-                .allowCredentials(true); // Kimlik bilgileri (cookie vb.) gönderimine izin ver.
+        // CORS setup so the Angular app (localhost:4200) can call the backend API (localhost:8080).
+        registry.addMapping("/api/**") // Only allow paths starting with /api/.
+            .allowedOrigins("http://localhost:4200") // Only accept requests from this origin.
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // HTTP methods we allow.
+            .allowedHeaders("*") // Allow all headers.
+            .allowCredentials(true); // Allow sending credentials (cookies, etc.).
     }
 }

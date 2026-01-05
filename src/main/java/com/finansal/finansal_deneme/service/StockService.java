@@ -2,6 +2,7 @@ package com.finansal.finansal_deneme.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.validation.annotation.Validated;
 
@@ -15,35 +16,57 @@ import jakarta.validation.constraints.NotBlank;
 public interface StockService {
     
     /**
-     * Bir hisse senedinin aylık verilerini dış API'den çeker ve veritabanına kaydeder.
-     * Bu işlem asenkron olarak (non-blocking) çalışır.
-     * @param symbol Hisse senedi sembolü (örn: "IBM").
+     * Pulls monthly data for a stock from the external API and saves it.
+     * Runs asynchronously (non-blocking).
+     * INTERNAL USE: for the scheduler and other internal operations.
+     * For API calls, prefer syncMonthlyStockDataAsync().
+     * @param symbol Stock symbol (e.g., "IBM").
      */
     void syncMonthlyStockData(@NotBlank(message = "Symbol must not be blank") String symbol);
 
     /**
-     * Belirtilen hisse senedinin tüm verilerini veritabanından çeker.
-     * @param symbol Hisse senedi sembolü.
-     * @return İlgili sembole ait tüm `StockData` kayıtları (en yeniden en eskiye sıralı).
+     * Async monthly data sync - returns a CompletableFuture.
+     * RECOMMENDED: API endpoints should use this method.
+     * @param symbol Stock symbol
+     * @return CompletableFuture<Void> - async operation result
+     */
+    CompletableFuture<Void> syncMonthlyStockDataAsync(@NotBlank(message = "Symbol must not be blank") String symbol);
+
+    /**
+     * Fetches all data for the given stock from the database.
+     * @param symbol Stock symbol.
+     * @return All StockData records for the symbol (sorted newest to oldest).
      */
     List<StockData> getStockDataBySymbol(@NotBlank(message = "Symbol must not be blank") String symbol);
 
     /**
-     * Gelen zaman serisi verisini veritabanına kaydeder.
-     * @param symbol Hisse senedi sembolü.
-     * @param timeSeries Tarih ve fiyat bilgilerini içeren map.
+     * Persists incoming time series data.
+     * @param symbol Stock symbol.
+     * @param timeSeries Map containing date and price info.
      */
     void saveMonthlyTimeSeriesData(@NotBlank(message = "Symbol must not be blank") String symbol,
                             Map<String, TimeSeriesEntryDto> timeSeries);
 
     /**
-     * Veritabanında kayıtlı olan tüm farklı hisse senedi sembollerini getirir.
-     * @return Sembollerin listesi.
+     * Fetches all distinct stock symbols stored in the database.
+     * @return List of symbols.
      */
     List<String> getAllSymbols();
 
-    // Günlük veri senkronizasyonu ve erişimi
+    // Daily data sync and access
+    /**
+     * INTERNAL USE: for the scheduler and other internal operations.
+     * For API calls, prefer syncDailyStockDataAsync().
+     */
     void syncDailyStockData(@NotBlank(message = "Symbol must not be blank") String symbol);
+
+    /**
+     * Async daily data sync - returns a CompletableFuture.
+     * RECOMMENDED: API endpoints should use this method.
+     * @param symbol Stock symbol
+     * @return CompletableFuture<Void> - async operation result
+     */
+    CompletableFuture<Void> syncDailyStockDataAsync(@NotBlank(message = "Symbol must not be blank") String symbol);
 
     void saveDailyTimeSeriesData(@NotBlank(message = "Symbol must not be blank") String symbol,
                                  Map<String, TimeSeriesEntryDto> timeSeries);
